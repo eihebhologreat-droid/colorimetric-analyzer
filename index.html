@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Colorimetric Concentration Analyzer</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-2: #273349;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #16a34a;
+      --error: #dc2626;
+      --border: #334155;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+    .container { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
+    header { text-align: center; }
+    header h1 { margin: 0 0 .25rem; font-size: 2rem; }
+    .subtitle { color: var(--muted); margin: 0; }
+
+    .top-nav { display: flex; gap: .5rem; background: var(--surface); padding: .5rem; border-radius: var(--radius); }
+    .nav-btn { flex: 1; padding: .75rem; border: none; background: transparent; color: var(--muted); border-radius: 8px; cursor: pointer; font-weight: 600; font-size: .95rem; transition: background .2s, color .2s; }
+    .nav-btn:hover { color: var(--text); }
+    .nav-btn.active { background: var(--primary); color: white; }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .card-header h2 { margin: 0; font-size: 1.5rem; }
+
+    .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .action-card { border: 2px dashed var(--border); border-radius: var(--radius); padding: 1.5rem 1rem; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; background: transparent; width: 100%; font-family: inherit; }
+    .action-card:hover { border-color: var(--primary); background: var(--surface-2); }
+    .icon { font-size: 2.5rem; margin-bottom: .5rem; }
+    .action-title { font-weight: 600; }
+    .drop-hint { color: var(--muted); font-size: .85rem; margin-top: .25rem; }
+    @media (max-width: 480px) { .action-grid { grid-template-columns: 1fr; } }
+
+    .preview { margin-top: 1rem; display: flex; align-items: center; gap: 1rem; padding: .75rem; background: var(--surface-2); border-radius: var(--radius); }
+    .preview img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; }
+    .preview-name { font-size: .9rem; color: var(--muted); word-break: break-all; }
+
+    .btn-primary { width: 100%; margin-top: 1rem; padding: .85rem; background: var(--primary); color: white; border: none; border-radius: var(--radius); font-size: 1rem; font-weight: 600; cursor: pointer; transition: background .2s; }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+    .result h2 { margin: 0 0 1rem; }
+    .big-number { text-align: center; padding: 1.5rem; background: var(--surface-2); border-radius: var(--radius); margin-bottom: 1rem; }
+    .big-number span:first-child { font-size: 3rem; font-weight: 700; color: var(--success); }
+    .unit { font-size: 1.25rem; color: var(--muted); margin-left: .5rem; }
+
+    .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .75rem; margin-bottom: 1rem; }
+    .meta > div { background: var(--surface-2); padding: .75rem; border-radius: 8px; }
+    .meta span { display: block; font-size: .75rem; color: var(--muted); margin-bottom: .25rem; }
+    .meta strong { font-size: 1rem; }
+
+    details { color: var(--muted); }
+    details summary { cursor: pointer; padding: .5rem 0; }
+    .tech { font-size: .85rem; padding: .5rem 0; }
+    .tech code { background: var(--surface-2); padding: 2px 6px; border-radius: 4px; }
+    .tech ul { padding-left: 1.25rem; }
+
+    .error-card { border-color: var(--error); color: #fecaca; }
+
+    .date-controls { display: flex; gap: 1rem; flex-wrap: wrap; align-items: end; margin-bottom: 1rem; }
+    .date-controls label { display: flex; flex-direction: column; font-size: .8rem; color: var(--muted); gap: .35rem; }
+    .date-controls input[type="date"] { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: .5rem .65rem; font-size: .9rem; }
+
+    .chart-wrap { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; margin: 1rem 0 1.5rem; display: flex; flex-direction: column; gap: .5rem; }
+    .chart-title { font-size: .95rem; font-weight: 600; color: var(--text); }
+    .chart-img { width: 100%; max-height: 360px; object-fit: contain; border-radius: 8px; background: white; padding: .5rem; display: block; }
+    .chart-empty { width: 100%; min-height: 200px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: .9rem; border: 1px dashed var(--border); border-radius: 8px; }
+
+    .history-row { display: flex; gap: 1rem; padding: .75rem; background: var(--surface-2); border-radius: 8px; margin-bottom: .5rem; align-items: center; }
+    .history-row img { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; }
+    .muted { color: var(--muted); font-size: .85rem; }
+
+    /* Calibration list */
+    .calibration-list { margin-top: 1rem; }
+    .cal-item { display: flex; justify-content: space-between; align-items: center; padding: .75rem; background: var(--surface-2); border-radius: 8px; margin-bottom: .5rem; }
+    .cal-item-info { flex: 1; }
+    .cal-item-filename { font-weight: 500; word-break: break-all; }
+    .cal-item-conc { font-size: .85rem; color: var(--muted); }
+    .delete-btn { background: none; border: none; color: #f87171; cursor: pointer; font-size: 1.25rem; padding: 0 .5rem; }
+    .delete-btn:hover { color: #ef4444; }
+
+    .float-btn { position: fixed; bottom: 2rem; right: 2rem; background: var(--primary); color: white; border: none; border-radius: 32px; padding: .75rem 1.5rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 8px; z-index: 10; }
+    .float-btn:hover { background: var(--primary-hover); }
+
+    /* Snackbar */
+    .snackbar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 40px; font-size: 0.9rem; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 1px solid var(--primary); }
+
+    /* Camera Modal */
+    .cam-modal { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; padding: 1rem; }
+    .cam-stage { position: relative; width: min(92vw, 640px); aspect-ratio: 4/3; background: #000; border-radius: var(--radius); overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,.6); }
+    .cam-stage video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .aimer { position: absolute; inset: 0; pointer-events: none; }
+    .aimer::before, .aimer::after { content: ""; position: absolute; background: rgba(34,197,94,.9); box-shadow: 0 0 6px rgba(34,197,94,.8); }
+    .aimer::before { left: 0; right: 0; top: 50%; height: 1px; transform: translateY(-.5px); }
+    .aimer::after { top: 0; bottom: 0; left: 50%; width: 1px; transform: translateX(-.5px); }
+    .aimer .ring { position: absolute; top: 50%; left: 50%; width: 120px; height: 120px; border: 2px solid rgba(34,197,94,.9); border-radius: 50%; transform: translate(-50%,-50%); box-shadow: 0 0 0 9999px rgba(0,0,0,.25) inset, 0 0 10px rgba(34,197,94,.6); }
+    .aimer .dot { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; border-radius: 50%; background: #ef4444; transform: translate(-50%,-50%); box-shadow: 0 0 6px #ef4444; }
+    .aimer .corner { position: absolute; width: 24px; height: 24px; border: 2px solid rgba(34,197,94,.9); }
+    .aimer .c-tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+    .aimer .c-tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+    .aimer .c-bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+    .aimer .c-br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+    .cam-controls { display: flex; gap: .75rem; margin-top: 1rem; flex-wrap: wrap; justify-content: center; }
+    .cam-controls button { padding: .75rem 1.25rem; border: none; border-radius: var(--radius); font-weight: 600; cursor: pointer; font-size: .95rem; }
+    .cam-shoot { background: var(--success); color: white; }
+    .cam-cancel { background: var(--surface-2); color: var(--text); }
+    .cam-switch { background: var(--surface-2); color: var(--text); }
+    .cam-error { color: #fecaca; margin-top: .75rem; text-align: center; max-width: 90vw; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Colorimetric Analyzer</h1>
+    <p class="subtitle">Measure concentration from colour</p>
+  </header>
+
+  <nav class="top-nav">
+    <button class="nav-btn" data-page="calibrate">🔧 Calibration</button>
+    <button class="nav-btn active" data-page="analyze">🔬 Analyze</button>
+    <button class="nav-btn" data-page="history">📊 History</button>
+  </nav>
+
+  <!-- Calibration Page -->
+  <section id="calibrate-page" hidden>
+    <div class="card">
+      <div class="card-header">
+        <h2>Calibration Samples</h2>
+        <button id="calibHelpBtn" style="background:none; border:none; color:var(--primary); font-size:1.5rem; cursor:pointer;">❔</button>
+      </div>
+      <div id="calibrationList" class="calibration-list">
+        <p class="muted">Loading samples...</p>
+      </div>
+    </div>
+    <button id="addSamplesBtn" class="float-btn">➕ Add Samples</button>
+  </section>
+
+  <!-- Analyze Page -->
+  <section id="analyze-page">
+    <div class="card">
+      <form id="uploadForm">
+        <div class="action-grid">
+          <button type="button" id="openCameraBtn" class="action-card">
+            <div class="icon">📸</div>
+            <div class="action-title">Capture Photo</div>
+            <div class="drop-hint">Use your camera</div>
+          </button>
+          <label class="action-card" for="fileInput">
+            <div class="icon">🖼️</div>
+            <div class="action-title">Upload from Files</div>
+            <div class="drop-hint">JPG / PNG • Max 10 MB</div>
+            <input type="file" id="fileInput" accept="image/*" hidden />
+          </label>
+        </div>
+        <div id="preview" class="preview" hidden>
+          <img id="previewImg" alt="preview" />
+          <div id="previewName" class="preview-name"></div>
+        </div>
+        <button type="submit" id="submitBtn" class="btn-primary" disabled>Analyze Sample</button>
+      </form>
+    </div>
+    <div id="resultCard" class="card result" hidden>
+      <h2>Result</h2>
+      <div class="big-number"><span id="concValue">—</span><span class="unit">ppm</span></div>
+      <div class="meta">
+        <div><span>Closest sample</span><strong id="matchedSample">—</strong></div>
+        <div><span>Confidence</span><strong id="confidence">—</strong></div>
+        <div><span>HSV distance</span><strong id="distance">—</strong></div>
+      </div>
+      <details>
+        <summary>Technical details</summary>
+        <div class="tech">
+          <div>Measured RGB: <code id="measRgb">—</code></div>
+          <div>Measured HSV: <code id="measHsv">—</code></div>
+          <div>Top 3 matches:</div>
+          <ul id="topMatches"></ul>
+        </div>
+      </details>
+    </div>
+    <div id="errorCard" class="card error-card" hidden><strong>Error:</strong> <span id="errorMsg"></span></div>
+  </section>
+
+  <!-- History Page -->
+  <section id="history-page" hidden>
+    <div class="card">
+      <div class="date-controls">
+        <label>From <input type="date" id="startDate" /></label>
+        <label>To <input type="date" id="endDate" /></label>
+        <button id="applyDates" class="btn-primary" style="width:auto;margin:0;">Apply</button>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">Concentration over time</div>
+        <img id="historyChart" class="chart-img" alt="Concentration over time" hidden />
+        <div id="chartEmpty" class="chart-empty">No chart loaded yet — pick a date range and click Apply.</div>
+      </div>
+      <h3>Measurements</h3>
+      <div class="history-list" id="historyList"><p class="muted">No measurements to show.</p></div>
+    </div>
+  </section>
+</div>
+
+<!-- Camera Modal -->
+<div id="camModal" class="cam-modal" hidden>
+  <div class="cam-stage">
+    <video id="camVideo" autoplay playsinline muted></video>
+    <div class="aimer"><div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div><div class="ring"></div><div class="dot"></div></div>
+  </div>
+  <div class="cam-controls">
+    <button type="button" class="cam-shoot" id="snapBtn">📸 Capture</button>
+    <button type="button" class="cam-switch" id="switchCamBtn">🔄 Switch camera</button>
+    <button type="button" class="cam-cancel" id="closeCamBtn">✖ Cancel</button>
+  </div>
+  <div id="camError" class="cam-error"></div>
+</div>
+
+<script>
+  // ---------- Utilities ----------
+  function showMessage(msg, isError = false) {
+    let snack = document.querySelector('.snackbar');
+    if (snack) snack.remove();
+    snack = document.createElement('div');
+    snack.className = 'snackbar';
+    snack.style.background = isError ? '#dc2626' : '#16a34a';
+    snack.textContent = msg;
+    document.body.appendChild(snack);
+    setTimeout(() => snack.remove(), 3000);
+  }
+
+  // ---------- Navigation ----------
+  const navBtns = document.querySelectorAll('.nav-btn');
+  const pages = {
+    calibrate: document.getElementById('calibrate-page'),
+    analyze: document.getElementById('analyze-page'),
+    history: document.getElementById('history-page')
+  };
+  function showPage(pageId) {
+    Object.entries(pages).forEach(([id, el]) => el.hidden = (id !== pageId));
+    navBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.page === pageId));
+    if (pageId === 'history') loadHistory();
+    if (pageId === 'calibrate') loadCalibrationList();
+  }
+  navBtns.forEach(btn => btn.addEventListener('click', () => showPage(btn.dataset.page)));
+
+  // ---------- Calibration ----------
+  async function loadCalibrationList() {
+    const container = document.getElementById('calibrationList');
+    container.innerHTML = '<p class="muted">Loading...</p>';
+    try {
+      const res = await fetch('/api/calibration');
+      const data = await res.json();
+      const entries = data.entries || [];
+      if (entries.length === 0) {
+        container.innerHTML = '<p class="muted">No calibration samples. Click "Add Samples" to upload.</p>';
+        return;
+      }
+      container.innerHTML = entries.map(e => `
+        <div class="cal-item" data-filename="${escapeHtml(e.filename)}">
+          <div class="cal-item-info">
+            <div class="cal-item-filename">${escapeHtml(e.filename)}</div>
+            <div class="cal-item-conc">${e.concentration} ppm</div>
+          </div>
+          <button class="delete-btn" data-filename="${escapeHtml(e.filename)}">🗑️</button>
+        </div>
+      `).join('');
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async (ev) => {
+          ev.stopPropagation();
+          const filename = btn.dataset.filename;
+          if (confirm(`Delete ${filename}?`)) {
+            const resp = await fetch(`/api/calibration/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+            if (resp.ok) {
+              showMessage('Deleted');
+              loadCalibrationList();
+            } else {
+              showMessage('Delete failed', true);
+            }
+          }
+        });
+      });
+    } catch (err) {
+      container.innerHTML = `<p class="muted">Error loading: ${err.message}</p>`;
+    }
+  }
+  function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+  document.getElementById('addSamplesBtn')?.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.multiple = true;
+    input.onchange = async (e) => {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+      showMessage(`Adding ${files.length} sample(s)...`);
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('image', file);
+        try {
+          const res = await fetch('/api/calibration', { method: 'POST', body: formData });
+          if (!res.ok) {
+            const err = await res.json();
+            showMessage(`Failed ${file.name}: ${err.error}`, true);
+          } else {
+            showMessage(`Added ${file.name}`);
+          }
+        } catch (err) { showMessage(`Error ${file.name}`, true); }
+      }
+      loadCalibrationList();
+    };
+    input.click();
+  });
+
+  document.getElementById('calibHelpBtn')?.addEventListener('click', () => {
+    alert("Filename convention: sample_<concentration>.<ext>\nExamples:\nsample_0.0ppm.jpg\nsample_0.5ppm.png\nsample_2.0ppm.jpg\nThe number directly after 'sample_' is parsed as concentration.");
+  });
+
+  // ---------- Analyze: File & Camera ----------
+  const fileInput = document.getElementById('fileInput');
+  const preview = document.getElementById('preview');
+  const previewImg = document.getElementById('previewImg');
+  const previewName = document.getElementById('previewName');
+  const submitBtn = document.getElementById('submitBtn');
+  let selectedFile = null;
+  function showPreview(file) {
+    selectedFile = file;
+    previewImg.src = URL.createObjectURL(file);
+    previewName.textContent = file.name + ' (' + Math.round(file.size/1024) + ' KB)';
+    preview.hidden = false;
+    submitBtn.disabled = false;
+  }
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) showPreview(e.target.files[0]); });
+
+  // Camera Modal
+  const camModal = document.getElementById('camModal');
+  const camVideo = document.getElementById('camVideo');
+  const openCameraBtn = document.getElementById('openCameraBtn');
+  const snapBtn = document.getElementById('snapBtn');
+  const closeCamBtn = document.getElementById('closeCamBtn');
+  const switchCamBtn = document.getElementById('switchCamBtn');
+  const camError = document.getElementById('camError');
+  let stream = null;
+  let facingMode = 'environment';
+  async function startCamera() {
+    camError.textContent = '';
+    stopCamera();
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facingMode }, width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false });
+      camVideo.srcObject = stream;
+    } catch (err) {
+      camError.textContent = 'Camera error: ' + err.message;
+    }
+  }
+  function stopCamera() { if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } camVideo.srcObject = null; }
+  openCameraBtn.addEventListener('click', () => { camModal.hidden = false; startCamera(); });
+  closeCamBtn.addEventListener('click', () => { stopCamera(); camModal.hidden = true; });
+  switchCamBtn.addEventListener('click', () => { facingMode = (facingMode === 'environment') ? 'user' : 'environment'; startCamera(); });
+  snapBtn.addEventListener('click', () => {
+    if (!stream) return;
+    const w = camVideo.videoWidth || 1280;
+    const h = camVideo.videoHeight || 960;
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(camVideo, 0, 0, w, h);
+    canvas.toBlob(blob => {
+      if (!blob) { camError.textContent = 'Capture failed'; return; }
+      const file = new File([blob], 'capture_' + Date.now() + '.jpg', { type: 'image/jpeg' });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      fileInput.files = dt.files;
+      showPreview(file);
+      stopCamera();
+      camModal.hidden = true;
+    }, 'image/jpeg', 0.92);
+  });
+
+  // Analyze submission
+  const form = document.getElementById('uploadForm');
+  const resultCard = document.getElementById('resultCard');
+  const errorCard = document.getElementById('errorCard');
+  const errorMsg = document.getElementById('errorMsg');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!selectedFile) return;
+    errorCard.hidden = true;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Analyzing...';
+    try {
+      const fd = new FormData();
+      fd.append('image', selectedFile);
+      const res = await fetch('/api/analyze', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      document.getElementById('concValue').textContent = data.concentration;
+      document.getElementById('matchedSample').textContent = data.matched_sample;
+      document.getElementById('confidence').textContent = data.confidence_percent + '%';
+      document.getElementById('distance').textContent = data.distance;
+      document.getElementById('measRgb').textContent = JSON.stringify(data.measured_rgb);
+      document.getElementById('measHsv').textContent = JSON.stringify(data.measured_hsv);
+      const ul = document.getElementById('topMatches');
+      ul.innerHTML = '';
+      (data.top_matches || []).forEach(m => { const li = document.createElement('li'); li.textContent = `${m.filename} — ${m.concentration} ppm (dist ${m.distance})`; ul.appendChild(li); });
+      resultCard.hidden = false;
+    } catch (err) { errorMsg.textContent = err.message; errorCard.hidden = false; }
+    finally { submitBtn.disabled = false; submitBtn.textContent = 'Analyze Sample'; }
+  });
+
+  // ---------- History ----------
+  const startDate = document.getElementById('startDate');
+  const endDate = document.getElementById('endDate');
+  const applyDates = document.getElementById('applyDates');
+  const historyChart = document.getElementById('historyChart');
+  const chartEmpty = document.getElementById('chartEmpty');
+  const historyList = document.getElementById('historyList');
+  async function loadHistory() {
+    const params = new URLSearchParams();
+    if (startDate.value) params.set('start', startDate.value);
+    if (endDate.value) params.set('end', endDate.value);
+    const qs = params.toString();
+    historyChart.src = `/api/history/chart?${qs}&_=${Date.now()}`;
+    historyChart.hidden = false;
+    chartEmpty.hidden = true;
+    historyChart.onerror = () => { historyChart.hidden = true; chartEmpty.hidden = false; chartEmpty.textContent = 'Could not load chart.'; };
+    try {
+      const res = await fetch(`/api/history?${qs}`);
+      const data = await res.json();
+      const rows = data.measurements || [];
+      if (rows.length === 0) { historyList.innerHTML = '<p class="muted">No measurements to show.</p>'; return; }
+      historyList.innerHTML = rows.map(r => `
+        <div class="history-row">
+          <img src="/uploads/${r.image_filename}" alt="" onerror="this.style.display='none'" />
+          <div><div><strong>${r.concentration} ppm</strong> — ${r.matched_sample ?? ''}</div><div class="muted">${new Date(r.timestamp).toLocaleString()} • conf ${r.confidence ?? '—'}%</div></div>
+        </div>
+      `).join('');
+    } catch (err) { historyList.innerHTML = `<p class="muted">Failed to load history: ${err.message}</p>`; }
+  }
+  applyDates.addEventListener('click', loadHistory);
+  // Initial load of calibration list if visible first, but default page is analyze
+  showPage('analyze');
+</script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+{
+  "entries": [
+    {
+      "filename": "sample_0.0ppm.png",
+      "concentration": 0.0,
+      "rgb": [
+        255.0,
+        240.0,
+        220.0
+      ],
+      "hsv": [
+        17.0,
+        35.0,
+        255.0
+      ]
+    },
+    {
+      "filename": "sample_0.5ppm.png",
+      "concentration": 0.5,
+      "rgb": [
+        255.0,
+        220.0,
+        180.0
+      ],
+      "hsv": [
+        16.0,
+        75.0,
+        255.0
+      ]
+    },
+    {
+      "filename": "sample_1.0ppm.png",
+      "concentration": 1.0,
+      "rgb": [
+        255.0,
+        180.0,
+        120.0
+      ],
+      "hsv": [
+        13.0,
+        135.0,
+        255.0
+      ]
+    },
+    {
+      "filename": "sample_2.0ppm.png",
+      "concentration": 2.0,
+      "rgb": [
+        230.0,
+        120.0,
+        80.0
+      ],
+      "hsv": [
+        8.0,
+        166.0,
+        230.0
+      ]
+    },
+    {
+      "filename": "sample_5.0ppm.png",
+      "concentration": 5.0,
+      "rgb": [
+        200.0,
+        60.0,
+        40.0
+      ],
+      "hsv": [
+        4.0,
+        204.0,
+        200.0
+      ]
+    }
+  ]
+}
